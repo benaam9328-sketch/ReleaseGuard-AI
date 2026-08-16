@@ -1,4 +1,7 @@
 # ReleaseGuard AI
+Development work- Done with help of cursor
+Readme file - Created with help of ChatGPT
+DevOps- Done my me.
 
 A FastAPI service that scores how risky a release is before it ships.
 
