@@ -47,9 +47,26 @@ Do not create an unsupported SOTA score.
 
 ## Current Task
 
-`RG-005` / `RG-006` — Docker image and GitHub Actions CI. Evidence adapters are complete.
+`RG-009` — Groq / Llama explanation. Docker image and GitHub Actions CI are complete.
 
 Do not generate the full platform.
+
+## Run with Docker
+
+```text
+docker build -t releaseguard-ai .
+docker run --rm -p 8000:8000 releaseguard-ai
+```
+
+Without `DATABASE_URL` the API uses in-memory storage.
+
+API + Postgres:
+
+```text
+docker compose up --build
+```
+
+GitHub Actions on `master` runs pytest (Python 3.12) and builds the image. It does not deploy.
 
 ## Evidence adapters
 

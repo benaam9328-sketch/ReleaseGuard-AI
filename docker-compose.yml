@@ -15,5 +15,15 @@ services:
       timeout: 5s
       retries: 5
 
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+psycopg://releaseguard:releaseguard@db:5432/releaseguard
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   releaseguard_pgdata:
