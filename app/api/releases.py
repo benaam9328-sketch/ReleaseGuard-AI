@@ -3,6 +3,8 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from app.adapters.enrich import enrich_release_evidence
+from app.config import get_settings
 from app.normalize import expand_release_evidence
 from app.risk.engine import assess
 from app.schemas.assessment import (
@@ -35,6 +37,7 @@ def submit_release(
     store: Annotated[EvidenceStore, Depends(get_store)],
 ) -> ReleaseAnalyzeResponse:
     evidence = expand_release_evidence(payload)
+    evidence = enrich_release_evidence(evidence, payload, get_settings())
     saved, _created = store.save(evidence)
     assessment = _with_stored_approval(assess(saved), store)
     return ReleaseAnalyzeResponse(evidence=saved, assessment=assessment)

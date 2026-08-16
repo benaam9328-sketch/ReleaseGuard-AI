@@ -66,6 +66,27 @@ def test_missing_identity_is_422() -> None:
     assert response.status_code == 422
 
 
+def test_submit_trivy_report_json() -> None:
+    client = _client()
+    response = client.post(
+        "/v1/releases",
+        json={
+            "release_id": "REL-trivy",
+            "repository": "releaseguard-ai",
+            "commit_sha": "abc123def456",
+            "ci_status": "success",
+            "test_status": "success",
+            "trivy_report": {"Results": []},
+        },
+    )
+    assert response.status_code == 201
+    trivy = response.json()["evidence"]["trivy"]
+    assert trivy["scan_status"] == "clean"
+    assert trivy["critical"] == 0
+    assert trivy["high"] == 0
+    assert "trivy" not in response.json()["evidence"]["missing_sources"]
+
+
 def test_failed_status_is_not_coerced() -> None:
     client = _client()
     response = client.post(

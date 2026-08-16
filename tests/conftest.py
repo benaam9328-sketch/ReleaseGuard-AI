@@ -1,6 +1,9 @@
 import os
 
 os.environ.pop("DATABASE_URL", None)
+# Empty strings override .env so tests never call live GitHub.
+os.environ["GITHUB_TOKEN"] = ""
+os.environ["GITHUB_REPOSITORY"] = ""
 
 from app.storage import store
 

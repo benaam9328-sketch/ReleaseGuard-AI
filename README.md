@@ -47,6 +47,19 @@ Do not create an unsupported SOTA score.
 
 ## Current Task
 
-`RG-007` — GitHub / Actions / Trivy adapters. Phase 1 approval is complete.
+`RG-005` / `RG-006` — Docker image and GitHub Actions CI. Evidence adapters are complete.
 
 Do not generate the full platform.
+
+## Evidence adapters
+
+`POST /v1/releases` still accepts compact JSON.
+
+Optional Trivy scanner JSON:
+
+```json
+{ "trivy_report": { "Results": [] } }
+```
+
+Optional live GitHub / Actions fetch when `.env` has `GITHUB_TOKEN` and the repository is `owner/repo` (or `GITHUB_REPOSITORY` is set). Failed fetches stay `unknown`; counts are not invented as zero.
+

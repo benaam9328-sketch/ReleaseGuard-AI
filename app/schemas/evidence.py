@@ -176,3 +176,4 @@ class ReleaseEvidenceSubmit(BaseModel):
     history: HistoryEvidence | None = None
     missing_sources: list[str] = Field(default_factory=list)
     failed_sources: list[str] = Field(default_factory=list)
+    trivy_report: dict | None = None
