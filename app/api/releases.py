@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.adapters.enrich import enrich_release_evidence
+from app.ai.explain import explain_assessment
 from app.config import get_settings
 from app.normalize import expand_release_evidence
 from app.risk.engine import assess
@@ -27,6 +28,14 @@ def _attach_saved_approval(assessment: Assessment, store: EvidenceStore) -> Asse
     return assessment
 
 
+def _complete_assessment(
+    evidence: ReleaseEvidence,
+    store: EvidenceStore,
+) -> Assessment:
+    assessment = _attach_saved_approval(assess(evidence), store)
+    return explain_assessment(assessment, evidence, get_settings())
+
+
 @router.post(
     "/releases",
     response_model=ReleaseAnalyzeResponse,
@@ -39,7 +48,7 @@ def submit_release(
     evidence = expand_release_evidence(payload)
     evidence = enrich_release_evidence(evidence, payload, get_settings())
     stored, _created = store.save(evidence)
-    assessment = _attach_saved_approval(assess(stored), store)
+    assessment = _complete_assessment(stored, store)
     return ReleaseAnalyzeResponse(evidence=stored, assessment=assessment)
 
 
@@ -62,7 +71,7 @@ def get_assessment(
     evidence = store.get(release_id)
     if evidence is None:
         raise HTTPException(status_code=404, detail="release_not_found")
-    return _attach_saved_approval(assess(evidence), store)
+    return _complete_assessment(evidence, store)
 
 
 @router.post("/releases/{release_id}/approval", response_model=Assessment)
@@ -86,7 +95,4 @@ def record_approval(
         decided_at=datetime.now(timezone.utc),
     )
     store.save_approval(release_id, approval)
-
-    assessment = assess(evidence)
-    assessment.approval = approval
-    return assessment
+    return _complete_assessment(evidence, store)

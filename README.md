@@ -102,6 +102,10 @@ The compact payload above is the minimum. You can also hand it richer input:
 
 If a fetch fails, that source is marked failed rather than guessed at.
 
+Set `GROQ_API_KEY` in `.env` (not in git) to attach a Llama 3.3 70B explanation.
+The model only comments on the deterministic score and signals; it cannot change them.
+Without a key, `ai_explanation.status` stays `unknown`.
+
 ## Storage
 
 Everything is in memory by default, which is enough for local work and for the
@@ -117,6 +121,7 @@ docker compose up -d db
 ```
 app/
   adapters/   pull evidence from GitHub, Actions, and Trivy
+  ai/         Groq explanation of the deterministic assessment
   api/        HTTP routes
   risk/       signal catalog, detectors, scoring engine
   schemas/    pydantic models for evidence and assessments

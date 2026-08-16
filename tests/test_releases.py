@@ -36,6 +36,7 @@ def test_submit_compact_and_fetch():
     assert "github" in evidence["missing_sources"]
     assert assessment["release_id"] == "REL-001"
     assert assessment["enforcement"] == "none"
+    assert assessment["ai_explanation"]["status"] == "unknown"
     fired = [sig["signal"] for sig in assessment["signals"]]
     assert "high_vulnerability" in fired
     assert "missing_critical_evidence" in fired

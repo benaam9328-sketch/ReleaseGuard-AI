@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     database_url: str | None = None
     github_token: str | None = None
     github_repository: str | None = None
+    groq_api_key: str | None = None
 
 
 def get_settings() -> Settings:
