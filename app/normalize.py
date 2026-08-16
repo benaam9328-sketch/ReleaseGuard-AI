@@ -13,12 +13,12 @@ from app.schemas.evidence import (
 
 
 def _combined_status(*statuses: SourceStatus | None) -> SourceStatus:
-    present = [status for status in statuses if status is not None]
-    if not present:
+    known = [status for status in statuses if status is not None]
+    if not known:
         return SourceStatus.unknown
-    if SourceStatus.failure in present:
+    if SourceStatus.failure in known:
         return SourceStatus.failure
-    if SourceStatus.unknown in present:
+    if SourceStatus.unknown in known:
         return SourceStatus.unknown
     return SourceStatus.success
 
@@ -97,11 +97,10 @@ def _actions_from_compact(
 
 
 def expand_release_evidence(submit: ReleaseEvidenceSubmit) -> ReleaseEvidence:
-    """Expand compact or partial submit payloads into canonical ReleaseEvidence.
+    """Turn a compact or partial payload into a full ReleaseEvidence.
 
-    Compact CI/test/Trivy fields fill a source only when that nested block is
-    absent. GitHub adapter details are never invented. Omitted Trivy counts
-    stay null, not zero.
+    Compact fields only fill in a source when the nested block is missing, and
+    anything we were not told stays null rather than defaulting to zero.
     """
     created_at = submit.created_at or datetime.now(timezone.utc)
     missing = list(submit.missing_sources)

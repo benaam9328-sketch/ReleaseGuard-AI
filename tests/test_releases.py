@@ -11,7 +11,7 @@ def _client() -> TestClient:
     return TestClient(create_app())
 
 
-def test_submit_compact_and_fetch() -> None:
+def test_submit_compact_and_fetch():
     client = _client()
     response = client.post(
         "/v1/releases",
@@ -36,10 +36,9 @@ def test_submit_compact_and_fetch() -> None:
     assert "github" in evidence["missing_sources"]
     assert assessment["release_id"] == "REL-001"
     assert assessment["enforcement"] == "none"
-    assert "high_vulnerability" in [item["signal"] for item in assessment["signals"]]
-    assert "missing_critical_evidence" in [
-        item["signal"] for item in assessment["signals"]
-    ]
+    fired = [sig["signal"] for sig in assessment["signals"]]
+    assert "high_vulnerability" in fired
+    assert "missing_critical_evidence" in fired
 
     fetched = client.get("/v1/releases/REL-001")
     assert fetched.status_code == 200
@@ -50,14 +49,14 @@ def test_submit_compact_and_fetch() -> None:
     assert scored.json()["risk_score"] == assessment["risk_score"]
 
 
-def test_unknown_release_assessment_is_404() -> None:
+def test_unknown_release_assessment_is_404():
     client = _client()
     response = client.get("/v1/releases/REL-missing/assessment")
     assert response.status_code == 404
     assert response.json()["detail"] == "release_not_found"
 
 
-def test_missing_identity_is_422() -> None:
+def test_missing_identity_is_422():
     client = _client()
     response = client.post(
         "/v1/releases",
@@ -66,7 +65,7 @@ def test_missing_identity_is_422() -> None:
     assert response.status_code == 422
 
 
-def test_submit_trivy_report_json() -> None:
+def test_submit_trivy_report_json():
     client = _client()
     response = client.post(
         "/v1/releases",
@@ -87,7 +86,7 @@ def test_submit_trivy_report_json() -> None:
     assert "trivy" not in response.json()["evidence"]["missing_sources"]
 
 
-def test_failed_status_is_not_coerced() -> None:
+def test_failed_status_is_not_coerced():
     client = _client()
     response = client.post(
         "/v1/releases",

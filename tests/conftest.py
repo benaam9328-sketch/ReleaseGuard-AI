@@ -8,7 +8,7 @@ os.environ["GITHUB_REPOSITORY"] = ""
 from app.storage import store
 
 
-def pytest_configure() -> None:
+def pytest_configure():
     store.reset_memory()
     store.backend = "memory"
     store._session_factory = None

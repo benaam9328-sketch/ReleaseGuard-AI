@@ -26,7 +26,7 @@ def _submit(client: TestClient, release_id: str = "REL-001"):
     )
 
 
-def test_approve_is_recorded_and_does_not_change_score() -> None:
+def test_approve_is_recorded_and_does_not_change_score():
     client = _client()
     created = _submit(client)
     original_score = created.json()["assessment"]["risk_score"]
@@ -49,7 +49,7 @@ def test_approve_is_recorded_and_does_not_change_score() -> None:
     assert fetched.json()["risk_score"] == original_score
 
 
-def test_reject_is_recorded() -> None:
+def test_reject_is_recorded():
     client = _client()
     _submit(client, "REL-002")
     response = client.post(
@@ -61,7 +61,7 @@ def test_reject_is_recorded() -> None:
     assert response.json()["approval"]["decision"] == "reject"
 
 
-def test_approval_unknown_release_is_404() -> None:
+def test_approval_unknown_release_is_404():
     client = _client()
     response = client.post(
         "/v1/releases/REL-missing/approval",
@@ -71,7 +71,7 @@ def test_approval_unknown_release_is_404() -> None:
     assert response.json()["detail"] == "release_not_found"
 
 
-def test_invalid_decision_is_422() -> None:
+def test_invalid_decision_is_422():
     client = _client()
     _submit(client)
     response = client.post(

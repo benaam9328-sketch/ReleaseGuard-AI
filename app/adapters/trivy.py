@@ -23,20 +23,19 @@ def parse_trivy_report(report: dict) -> TrivyEvidence:
     counts = {"critical": 0, "high": 0, "medium": 0, "low": 0}
     findings: list[TrivyFinding] = []
     for result in results:
-        vulnerabilities = result.get("Vulnerabilities") or []
-        for item in vulnerabilities:
-            severity = str(item.get("Severity") or "").upper()
+        for vuln in result.get("Vulnerabilities") or []:
+            severity = str(vuln.get("Severity") or "").upper()
             field = _SEVERITY_FIELDS.get(severity)
             if field is not None:
                 counts[field] += 1
-            vulnerability_id = item.get("VulnerabilityID") or item.get("vulnerability_id")
-            if vulnerability_id:
+            cve = vuln.get("VulnerabilityID") or vuln.get("vulnerability_id")
+            if cve:
                 findings.append(
                     TrivyFinding(
-                        vulnerability_id=str(vulnerability_id),
+                        vulnerability_id=str(cve),
                         severity=severity or "UNKNOWN",
-                        package=item.get("PkgName") or item.get("package"),
-                        title=item.get("Title") or item.get("title"),
+                        package=vuln.get("PkgName") or vuln.get("package"),
+                        title=vuln.get("Title") or vuln.get("title"),
                     )
                 )
 
