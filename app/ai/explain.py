@@ -13,6 +13,7 @@ Use only the facts in the user message.
 Do not invent CI results, vulnerability counts, DORA metrics, incidents, or timestamps.
 If a source is unknown or missing, say it is unknown.
 Do not change or dispute the risk_score, signals, or recommendation.
+DORA numbers are delivery performance, not the risk score.
 Keep the explanation to a few short paragraphs."""
 
 
@@ -36,6 +37,7 @@ def _facts(assessment: Assessment, evidence: ReleaseEvidence) -> dict:
         "missing_sources": evidence.missing_sources,
         "failed_sources": evidence.failed_sources,
         "is_synthetic": evidence.is_synthetic,
+        "dora_context": assessment.dora_context.model_dump(mode="json"),
     }
 
 

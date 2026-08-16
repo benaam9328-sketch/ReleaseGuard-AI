@@ -6,12 +6,15 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.adapters.enrich import enrich_release_evidence
 from app.ai.explain import explain_assessment
 from app.config import get_settings
+from app.dora.metrics import calculate_dora
 from app.normalize import expand_release_evidence
+from app.risk.catalog import DORA_TREND_WINDOW_DAYS, DORA_WINDOW_DAYS
 from app.risk.engine import assess
 from app.schemas.assessment import (
     Approval,
     ApprovalRequest,
     Assessment,
+    DoraContext,
     ReleaseAnalyzeResponse,
 )
 from app.schemas.enums import ApprovalDecision, ApprovalState
@@ -33,6 +36,12 @@ def _complete_assessment(
     store: EvidenceStore,
 ) -> Assessment:
     assessment = _attach_saved_approval(assess(evidence), store)
+    snapshot = calculate_dora(store.list_events(), datetime.now(timezone.utc))
+    assessment.dora_context = DoraContext(
+        window_days=DORA_WINDOW_DAYS,
+        trend_window_days=DORA_TREND_WINDOW_DAYS,
+        snapshot=snapshot,
+    )
     return explain_assessment(assessment, evidence, get_settings())
 
 

@@ -2,6 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
+from app.schemas.dora import DoraSnapshot
 from app.schemas.enums import (
     ApprovalDecision,
     ApprovalState,
@@ -35,6 +36,7 @@ class EvidenceSummary(BaseModel):
 class DoraContext(BaseModel):
     window_days: int = 30
     trend_window_days: int = 7
+    snapshot: DoraSnapshot | None = None
 
 
 class AiExplanation(BaseModel):

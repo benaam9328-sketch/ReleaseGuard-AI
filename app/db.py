@@ -29,6 +29,16 @@ class ReleaseApprovalRow(Base):
     )
 
 
+class DeliveryEventRow(Base):
+    __tablename__ = "delivery_events"
+
+    event_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    payload: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    timestamp: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+
+
 def make_engine(database_url: str):
     return create_engine(database_url, future=True)
 

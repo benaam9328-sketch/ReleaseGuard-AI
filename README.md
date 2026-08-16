@@ -50,6 +50,8 @@ not change its score, and nothing is blocked yet (`enforcement` is `none`).
 | `GET` | `/v1/releases/{release_id}` | Fetch stored evidence |
 | `GET` | `/v1/releases/{release_id}/assessment` | Re-score a stored release |
 | `POST` | `/v1/releases/{release_id}/approval` | Record an approve or reject |
+| `GET` | `/v1/dora` | 30-day DORA metrics plus a 7-day trend |
+| `POST` | `/v1/events` | Store a delivery/incident event |
 
 Interactive docs are at `/docs` once the server is running.
 
@@ -102,6 +104,9 @@ The compact payload above is the minimum. You can also hand it richer input:
 
 If a fetch fails, that source is marked failed rather than guessed at.
 
+DORA metrics come from stored `DeliveryEvent` records (`POST /v1/events`).
+Empty event history is `unavailable`, not zero. DORA is not the risk score.
+
 Set `GROQ_API_KEY` in `.env` (not in git) to attach a Llama 3.3 70B explanation.
 The model only comments on the deterministic score and signals; it cannot change them.
 Without a key, `ai_explanation.status` stays `unknown`.
@@ -120,6 +125,7 @@ docker compose up -d db
 
 ```
 app/
+  dora/       deployment frequency, lead time, CFR, MTTR
   adapters/   pull evidence from GitHub, Actions, and Trivy
   ai/         Groq explanation of the deterministic assessment
   api/        HTTP routes

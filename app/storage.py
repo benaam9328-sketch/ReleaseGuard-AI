@@ -1,7 +1,10 @@
 from datetime import datetime
 
+from sqlalchemy import select
+
 from app.db import (
     Base,
+    DeliveryEventRow,
     ReleaseApprovalRow,
     ReleaseEvidenceRow,
     make_engine,
@@ -9,6 +12,7 @@ from app.db import (
 )
 from app.schemas.assessment import Approval
 from app.schemas.enums import ApprovalDecision, ApprovalState
+from app.schemas.events import DeliveryEvent
 from app.schemas.evidence import ReleaseEvidence
 
 
@@ -19,11 +23,13 @@ class EvidenceStore:
         self.backend = "memory"
         self._evidence: dict[str, dict] = {}
         self._approvals: dict[str, Approval] = {}
+        self._events: dict[str, dict] = {}
         self._session_factory = None
 
     def reset_memory(self) -> None:
         self._evidence = {}
         self._approvals = {}
+        self._events = {}
 
     def configure_postgres(self, database_url: str) -> None:
         engine = make_engine(database_url)
@@ -61,6 +67,21 @@ class EvidenceStore:
         if self.backend == "postgres":
             return self._get_approval_postgres(release_id)
         return self._approvals.get(release_id)
+
+    def save_event(self, event: DeliveryEvent) -> DeliveryEvent:
+        payload = event.model_dump(mode="json")
+        if self.backend == "postgres":
+            self._save_event_postgres(event.event_id, payload, event.timestamp)
+        else:
+            self._events[event.event_id] = payload
+        return event
+
+    def list_events(self) -> list[DeliveryEvent]:
+        if self.backend == "postgres":
+            payloads = self._list_events_postgres()
+        else:
+            payloads = list(self._events.values())
+        return [DeliveryEvent.model_validate(item) for item in payloads]
 
     def _save_postgres(
         self, release_id: str, payload: dict, created_at: datetime
@@ -120,6 +141,29 @@ class EvidenceStore:
                 decision=decision,
                 decided_at=row.decided_at,
             )
+
+    def _save_event_postgres(
+        self, event_id: str, payload: dict, timestamp: datetime
+    ) -> None:
+        with self._session_factory() as session:
+            row = session.get(DeliveryEventRow, event_id)
+            if row is None:
+                session.add(
+                    DeliveryEventRow(
+                        event_id=event_id,
+                        payload=payload,
+                        timestamp=timestamp,
+                    )
+                )
+            else:
+                row.payload = payload
+                row.timestamp = timestamp
+            session.commit()
+
+    def _list_events_postgres(self) -> list[dict]:
+        with self._session_factory() as session:
+            rows = session.scalars(select(DeliveryEventRow)).all()
+            return [row.payload for row in rows]
 
 
 store = EvidenceStore()
