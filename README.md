@@ -1,10 +1,11 @@
+> ## 📌 Project Credits
+> 
+> **Development:** Done with help of Cursor  
+> **README:** Created with help of ChatGPT  
+> **DevOps:** Done by me
+
+
 # ReleaseGuard AI
-Development work - Done with help of Cursor
-
-README file - Created with help of ChatGPT
-
-DevOps - Done by me.
-
 A FastAPI service that scores how risky a release is before it ships.
 
 You send it whatever evidence you have about a release (CI and test results, a
