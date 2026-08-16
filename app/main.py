@@ -1,0 +1,29 @@
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+
+from app.api import api_router
+from app.config import get_settings
+from app.storage import store
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    settings = get_settings()
+    if settings.database_url:
+        store.configure_postgres(settings.database_url)
+    yield
+
+
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title="ReleaseGuard AI",
+        version="0.1.0",
+        description="Release-risk and governance API. RG-003 bootstrap.",
+        lifespan=lifespan,
+    )
+    app.include_router(api_router)
+    return app
+
+
+app = create_app()
