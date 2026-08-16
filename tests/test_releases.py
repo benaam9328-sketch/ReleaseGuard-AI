@@ -49,6 +49,10 @@ def test_submit_compact_and_fetch():
     assert scored.status_code == 200
     assert scored.json()["risk_score"] == assessment["risk_score"]
 
+    listed = client.get("/v1/releases")
+    assert listed.status_code == 200
+    assert listed.json()[0]["release_id"] == "REL-001"
+
 
 def test_unknown_release_assessment_is_404():
     client = _client()

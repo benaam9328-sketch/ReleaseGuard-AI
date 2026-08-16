@@ -47,6 +47,7 @@ not change its score, and nothing is blocked yet (`enforcement` is `none`).
 | `GET` | `/health` | Liveness |
 | `GET` | `/ready` | Readiness, reports the active storage backend |
 | `POST` | `/v1/releases` | Submit evidence, get back evidence plus assessment |
+| `GET` | `/v1/releases` | List stored releases |
 | `GET` | `/v1/releases/{release_id}` | Fetch stored evidence |
 | `GET` | `/v1/releases/{release_id}/assessment` | Re-score a stored release |
 | `POST` | `/v1/releases/{release_id}/approval` | Record an approve or reject |
@@ -74,23 +75,53 @@ Tests:
 pytest
 ```
 
-## Docker
+## Docker (API + Postgres)
+
+Start Docker Desktop, then from the repository root:
+
+```bash
+docker compose up --build
+```
+
+Check it:
+
+```bash
+curl http://localhost:8000/health
+curl http://localhost:8000/ready
+```
+
+You should see `{"status":"ok","service":"releaseguard-ai"}` and `{"status":"ok","storage":"postgres"}`.
+
+API docs: http://localhost:8000/docs
+
+Create a sample release:
+
+```bash
+curl -X POST http://localhost:8000/v1/releases -H "Content-Type: application/json" -d "{\"release_id\":\"REL-001\",\"repository\":\"releaseguard-ai\",\"commit_sha\":\"abc123def456\",\"ci_status\":\"success\",\"test_status\":\"success\",\"critical_vulnerabilities\":0,\"high_vulnerabilities\":2}"
+```
+
+Optional Groq explanation: put `GROQ_API_KEY` in local `.env` (never commit `.env`), then recreate the API container.
+
+API-only, in-memory, no Postgres:
 
 ```bash
 docker build -t releaseguard-ai .
 docker run --rm -p 8000:8000 releaseguard-ai
 ```
 
-Without `DATABASE_URL` the API uses in-memory storage.
+## Dashboard
 
-API + Postgres:
+With the API running on port 8000:
 
 ```bash
-docker compose up --build
+cd web
+npm install
+npm run dev
 ```
 
-GitHub Actions on `master` runs pytest (Python 3.12) and builds the image. It
-does not deploy.
+Open http://localhost:3000/dashboard
+
+## GitHub Actions
 
 ## Evidence sources
 
@@ -140,5 +171,6 @@ app/
   schemas/    pydantic models for evidence and assessments
   normalize.py  compact payload -> full evidence
   storage.py    memory and Postgres backends
+web/            Next.js /dashboard
 tests/
 ```

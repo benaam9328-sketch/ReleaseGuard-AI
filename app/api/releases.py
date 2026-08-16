@@ -63,6 +63,13 @@ def submit_release(
     return ReleaseAnalyzeResponse(evidence=stored, assessment=assessment)
 
 
+@router.get("/releases", response_model=list[ReleaseEvidence])
+def list_releases(
+    store: Annotated[EvidenceStore, Depends(get_store)],
+) -> list[ReleaseEvidence]:
+    return store.list_evidence()
+
+
 @router.get("/releases/{release_id}", response_model=ReleaseEvidence)
 def get_release(
     release_id: str,

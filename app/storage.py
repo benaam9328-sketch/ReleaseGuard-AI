@@ -83,6 +83,13 @@ class EvidenceStore:
             payloads = list(self._events.values())
         return [DeliveryEvent.model_validate(item) for item in payloads]
 
+    def list_evidence(self) -> list[ReleaseEvidence]:
+        if self.backend == "postgres":
+            payloads = self._list_evidence_postgres()
+        else:
+            payloads = list(self._evidence.values())
+        return [ReleaseEvidence.model_validate(item) for item in payloads]
+
     def _save_postgres(
         self, release_id: str, payload: dict, created_at: datetime
     ) -> bool:
@@ -163,6 +170,11 @@ class EvidenceStore:
     def _list_events_postgres(self) -> list[dict]:
         with self._session_factory() as session:
             rows = session.scalars(select(DeliveryEventRow)).all()
+            return [row.payload for row in rows]
+
+    def _list_evidence_postgres(self) -> list[dict]:
+        with self._session_factory() as session:
+            rows = session.scalars(select(ReleaseEvidenceRow)).all()
             return [row.payload for row in rows]
 
 

@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import api_router
 from app.config import get_settings
@@ -23,6 +24,12 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
     app.include_router(api_router)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["http://localhost:3000"],
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     return app
 
 

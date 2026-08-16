@@ -16,3 +16,5 @@ build/
 .idea/
 .vscode/
 .pytest_cache/
+web/node_modules/
+web/.next/
