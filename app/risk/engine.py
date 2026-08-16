@@ -17,13 +17,14 @@ from app.schemas.evidence import ReleaseEvidence
 
 
 def dedupe_signals(signals: list[RiskSignal]) -> list[RiskSignal]:
-    best: dict[str, RiskSignal] = {}
+    """Keep only the heaviest signal from each deduplication group."""
+    strongest: dict[str, RiskSignal] = {}
     for signal in signals:
         group = signal.deduplication_group.value
-        current = best.get(group)
-        if current is None or signal.weight > current.weight:
-            best[group] = signal
-    return list(best.values())
+        winner = strongest.get(group)
+        if winner is None or signal.weight > winner.weight:
+            strongest[group] = signal
+    return list(strongest.values())
 
 
 def score_signals(signals: list[RiskSignal]) -> int:
@@ -48,8 +49,8 @@ def _history_summary(evidence: ReleaseEvidence) -> str:
 
 def assess(evidence: ReleaseEvidence) -> Assessment:
     fired = collect_signals(evidence)
-    applicable = dedupe_signals(fired)
-    risk_score = score_signals(applicable)
+    counted = dedupe_signals(fired)
+    risk_score = score_signals(counted)
     risk_level, recommendation = band_for_score(risk_score)
     return Assessment(
         release_id=evidence.release_id,
@@ -57,7 +58,7 @@ def assess(evidence: ReleaseEvidence) -> Assessment:
         risk_level=risk_level,
         recommendation=recommendation,
         enforcement="none",
-        signals=applicable,
+        signals=counted,
         evidence_summary=EvidenceSummary(
             ci_status=evidence.github_actions.ci_status,
             test_status=evidence.github_actions.test_status,

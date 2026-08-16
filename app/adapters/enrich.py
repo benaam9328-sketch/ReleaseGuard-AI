@@ -15,7 +15,15 @@ def _drop_source(names: list[str], source: str) -> None:
         names.remove(source)
 
 
-def _owner_repo(evidence: ReleaseEvidence, settings: Settings) -> tuple[str, str] | None:
+def _add_source(names: list[str], source: str) -> None:
+    if source not in names:
+        names.append(source)
+
+
+def _owner_repo(
+    evidence: ReleaseEvidence,
+    settings: Settings,
+) -> tuple[str, str] | None:
     configured = settings.github_repository or evidence.repository
     if configured and "/" in configured:
         owner, repo = configured.split("/", 1)
@@ -37,7 +45,10 @@ def github_get_json(url: str, token: str) -> tuple[int, dict | list | None]:
         return response.status_code, response.json()
 
 
-def apply_trivy_report(evidence: ReleaseEvidence, report: dict | None) -> ReleaseEvidence:
+def apply_trivy_report(
+    evidence: ReleaseEvidence,
+    report: dict | None,
+) -> ReleaseEvidence:
     if report is None:
         return evidence
     trivy = parse_trivy_report(report)
@@ -45,9 +56,9 @@ def apply_trivy_report(evidence: ReleaseEvidence, report: dict | None) -> Releas
     _drop_source(evidence.missing_sources, SourceName.trivy.value)
     _drop_source(evidence.failed_sources, SourceName.trivy.value)
     if trivy.scan_status in {ScanStatus.unavailable, ScanStatus.scan_failed}:
-        evidence.missing_sources.append(SourceName.trivy.value)
+        _add_source(evidence.missing_sources, SourceName.trivy.value)
     if trivy.scan_status == ScanStatus.scan_failed:
-        evidence.failed_sources.append(SourceName.trivy.value)
+        _add_source(evidence.failed_sources, SourceName.trivy.value)
     return evidence
 
 
@@ -76,10 +87,8 @@ def apply_github_adapters(
     if evidence.github.status != SourceStatus.success:
         status, commit_payload = do_get(f"{base}/commits/{sha}")
         if status >= 400 or not isinstance(commit_payload, dict):
-            if SourceName.github.value not in evidence.failed_sources:
-                evidence.failed_sources.append(SourceName.github.value)
-            if SourceName.github.value not in evidence.missing_sources:
-                evidence.missing_sources.append(SourceName.github.value)
+            _add_source(evidence.failed_sources, SourceName.github.value)
+            _add_source(evidence.missing_sources, SourceName.github.value)
         else:
             _status, pulls = do_get(f"{base}/commits/{sha}/pulls")
             pr_commits = None
@@ -101,10 +110,8 @@ def apply_github_adapters(
     if evidence.github_actions.status == SourceStatus.unknown:
         status, runs = do_get(f"{base}/actions/runs?head_sha={sha}")
         if status >= 400 or not isinstance(runs, dict):
-            if SourceName.github_actions.value not in evidence.failed_sources:
-                evidence.failed_sources.append(SourceName.github_actions.value)
-            if SourceName.github_actions.value not in evidence.missing_sources:
-                evidence.missing_sources.append(SourceName.github_actions.value)
+            _add_source(evidence.failed_sources, SourceName.github_actions.value)
+            _add_source(evidence.missing_sources, SourceName.github_actions.value)
         else:
             jobs = None
             workflow_runs = runs.get("workflow_runs") or []

@@ -20,10 +20,10 @@ from app.storage import EvidenceStore, get_store
 router = APIRouter(prefix="/v1", tags=["releases"])
 
 
-def _with_stored_approval(assessment: Assessment, store: EvidenceStore) -> Assessment:
-    stored = store.get_approval(assessment.release_id)
-    if stored is not None:
-        assessment.approval = stored
+def _attach_saved_approval(assessment: Assessment, store: EvidenceStore) -> Assessment:
+    saved = store.get_approval(assessment.release_id)
+    if saved is not None:
+        assessment.approval = saved
     return assessment
 
 
@@ -38,9 +38,9 @@ def submit_release(
 ) -> ReleaseAnalyzeResponse:
     evidence = expand_release_evidence(payload)
     evidence = enrich_release_evidence(evidence, payload, get_settings())
-    saved, _created = store.save(evidence)
-    assessment = _with_stored_approval(assess(saved), store)
-    return ReleaseAnalyzeResponse(evidence=saved, assessment=assessment)
+    stored, _created = store.save(evidence)
+    assessment = _attach_saved_approval(assess(stored), store)
+    return ReleaseAnalyzeResponse(evidence=stored, assessment=assessment)
 
 
 @router.get("/releases/{release_id}", response_model=ReleaseEvidence)
@@ -62,7 +62,7 @@ def get_assessment(
     evidence = store.get(release_id)
     if evidence is None:
         raise HTTPException(status_code=404, detail="release_not_found")
-    return _with_stored_approval(assess(evidence), store)
+    return _attach_saved_approval(assess(evidence), store)
 
 
 @router.post("/releases/{release_id}/approval", response_model=Assessment)

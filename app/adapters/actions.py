@@ -31,7 +31,10 @@ def _duration_seconds(run: dict) -> int | None:
     return delta
 
 
-def actions_evidence_from_runs(runs_payload: dict, jobs_payload: dict | None = None) -> GithubActionsEvidence:
+def actions_evidence_from_runs(
+    runs_payload: dict,
+    jobs_payload: dict | None = None,
+) -> GithubActionsEvidence:
     runs = runs_payload.get("workflow_runs") or []
     if not runs:
         return GithubActionsEvidence(
@@ -60,7 +63,7 @@ def actions_evidence_from_runs(runs_payload: dict, jobs_payload: dict | None = N
         deploy_status = ci_status
 
     return GithubActionsEvidence(
-        status=ci_status if ci_status != SourceStatus.unknown else SourceStatus.unknown,
+        status=ci_status,
         source=SourceName.github_actions,
         ci_status=ci_status,
         test_status=test_status,

@@ -8,7 +8,7 @@ from app.schemas.enums import ScanStatus, SourceStatus
 from app.schemas.evidence import ReleaseEvidenceSubmit
 
 
-def test_parse_trivy_report_counts_findings() -> None:
+def test_parse_trivy_report_counts_findings():
     report = {
         "Results": [
             {
@@ -37,21 +37,21 @@ def test_parse_trivy_report_counts_findings() -> None:
     assert trivy.findings[0].vulnerability_id == "CVE-2024-0001"
 
 
-def test_parse_trivy_empty_results_is_clean_not_unknown() -> None:
+def test_parse_trivy_empty_results_is_clean_not_unknown():
     trivy = parse_trivy_report({"Results": []})
     assert trivy.scan_status == ScanStatus.clean
     assert trivy.critical == 0
     assert trivy.high == 0
 
 
-def test_parse_trivy_missing_results_is_scan_failed() -> None:
+def test_parse_trivy_missing_results_is_scan_failed():
     trivy = parse_trivy_report({"SchemaVersion": 2})
     assert trivy.scan_status == ScanStatus.scan_failed
     assert trivy.critical is None
     assert trivy.high is None
 
 
-def test_github_commit_payload_maps_files_and_migration() -> None:
+def test_github_commit_payload_maps_files_and_migration():
     payload = {
         "sha": "abc123def456",
         "commit": {
@@ -77,7 +77,7 @@ def test_github_commit_payload_maps_files_and_migration() -> None:
     assert github.first_commit_sha == "abc123def456"
 
 
-def test_actions_maps_failed_run() -> None:
+def test_actions_maps_failed_run():
     runs = {
         "workflow_runs": [
             {
@@ -101,7 +101,7 @@ def test_actions_maps_failed_run() -> None:
     assert actions.workflow_duration_seconds == 180
 
 
-def test_enrich_uses_trivy_report_and_fake_github() -> None:
+def test_enrich_uses_trivy_report_and_fake_github():
     submit = ReleaseEvidenceSubmit(
         release_id="REL-010",
         repository="benaam9328-sketch/ReleaseGuard-AI",
@@ -147,7 +147,7 @@ def test_enrich_uses_trivy_report_and_fake_github() -> None:
     assert "github_actions" not in enriched.missing_sources
 
 
-def test_failed_github_fetch_is_failed_not_invented() -> None:
+def test_failed_github_fetch_is_failed_not_invented():
     submit = ReleaseEvidenceSubmit(
         release_id="REL-011",
         repository="owner/repo",

@@ -19,7 +19,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="ReleaseGuard AI",
         version="0.1.0",
-        description="Release-risk and governance API. RG-003 bootstrap.",
+        description="Release risk scoring and approval API.",
         lifespan=lifespan,
     )
     app.include_router(api_router)

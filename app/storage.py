@@ -13,16 +13,16 @@ from app.schemas.evidence import ReleaseEvidence
 
 
 class EvidenceStore:
-    """Memory by default. PostgreSQL when DATABASE_URL is configured."""
+    """Keeps everything in memory unless DATABASE_URL points at Postgres."""
 
     def __init__(self) -> None:
         self.backend = "memory"
-        self._memory: dict[str, dict] = {}
+        self._evidence: dict[str, dict] = {}
         self._approvals: dict[str, Approval] = {}
         self._session_factory = None
 
     def reset_memory(self) -> None:
-        self._memory = {}
+        self._evidence = {}
         self._approvals = {}
 
     def configure_postgres(self, database_url: str) -> None:
@@ -38,15 +38,15 @@ class EvidenceStore:
                 evidence.release_id, payload, evidence.created_at
             )
         else:
-            created = evidence.release_id not in self._memory
-            self._memory[evidence.release_id] = payload
+            created = evidence.release_id not in self._evidence
+            self._evidence[evidence.release_id] = payload
         return evidence, created
 
     def get(self, release_id: str) -> ReleaseEvidence | None:
         if self.backend == "postgres":
             payload = self._get_postgres(release_id)
         else:
-            payload = self._memory.get(release_id)
+            payload = self._evidence.get(release_id)
         if payload is None:
             return None
         return ReleaseEvidence.model_validate(payload)

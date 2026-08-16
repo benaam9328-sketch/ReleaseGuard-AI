@@ -1,65 +1,108 @@
-# ReleaseGuard AI — Cursor Context Pack
+# ReleaseGuard AI
 
-Use these files as the project source of truth.
+A FastAPI service that scores how risky a release is before it ships.
 
-## Read First
+You send it whatever evidence you have about a release (CI and test results, a
+Trivy scan, changed files, infrastructure changes, past failures). It fills in
+the gaps honestly, runs a set of deterministic detectors over the result, and
+returns a risk score with the reasons behind it.
 
-1. `AGENTS.md`
-2. `PROJECT.md`
-3. `REQUIREMENTS.md`
-4. `ARCHITECTURE.md`
-5. `DECISIONS.md`
-6. `CONTRACTS.md`
-7. `TASKS.md`
-8. `CONTEXT.md`
+Missing evidence is never treated as a pass. If Trivy did not run, the release
+does not get a clean bill of health, it gets a `missing_critical_evidence`
+signal instead.
 
-Then consult:
-- `TECH_STACK.md`
-- `DEVELOPMENT.md`
-- `TESTING.md`
-- `skills.md`
+## Scoring
 
-## Important Product Distinction
+Each detector that fires contributes a weight:
 
-**DORA ≠ Release Risk**
+| Signal | Weight |
+| --- | --- |
+| `ci_failure` | 30 |
+| `critical_vulnerability` | 30 |
+| `rollback_required` | 30 |
+| `similar_historical_failure` | 20 |
+| `high_vulnerability` | 15 |
+| `database_migration` | 15 |
+| `high_risk_infrastructure_change` | 15 |
+| `large_change_surface` | 10 |
+| `missing_critical_evidence` | 10 |
 
-DORA measures delivery performance:
-- Deployment Frequency
-- Lead Time for Changes
-- Change Failure Rate
-- Time to Restore Service
+Signals belong to deduplication groups, and only the heaviest signal in a group
+counts, so a failed pipeline and a recent rollback are not charged twice. The
+total is capped at 100 and mapped to a band:
 
-ReleaseGuard risk combines current release evidence, security, infrastructure, historical context, DORA context, and runtime evidence.
+| Score | Level | Recommendation |
+| --- | --- | --- |
+| 0-30 | LOW | `ALLOW` |
+| 31-60 | MEDIUM | `REQUIRE_HUMAN_REVIEW` |
+| 61-100 | HIGH | `BLOCK_APPROVAL_REQUIRED` |
 
-## SOTA
+The recommendation is advisory. Approvals are recorded against a release but do
+not change its score, and nothing is blocked yet (`enforcement` is `none`).
 
-SOTA means the project's state-of-the-art release-intelligence capability set:
-- AI-assisted reasoning
-- historical pattern detection
-- multi-source evidence
-- DORA-aware context
-- security/IaC awareness
-- runtime feedback
-- explainability
-- human-in-the-loop governance
+## API
 
-Do not create an unsupported SOTA score.
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/health` | Liveness |
+| `GET` | `/ready` | Readiness, reports the active storage backend |
+| `POST` | `/v1/releases` | Submit evidence, get back evidence plus assessment |
+| `GET` | `/v1/releases/{release_id}` | Fetch stored evidence |
+| `GET` | `/v1/releases/{release_id}/assessment` | Re-score a stored release |
+| `POST` | `/v1/releases/{release_id}/approval` | Record an approve or reject |
 
-## Current Task
+Interactive docs are at `/docs` once the server is running.
 
-`RG-005` / `RG-006` — Docker image and GitHub Actions CI. Evidence adapters are complete.
+## Running it
 
-Do not generate the full platform.
-
-## Evidence adapters
-
-`POST /v1/releases` still accepts compact JSON.
-
-Optional Trivy scanner JSON:
-
-```json
-{ "trivy_report": { "Results": [] } }
+```bash
+pip install -r requirements.txt
+uvicorn app.main:app --reload
 ```
 
-Optional live GitHub / Actions fetch when `.env` has `GITHUB_TOKEN` and the repository is `owner/repo` (or `GITHUB_REPOSITORY` is set). Failed fetches stay `unknown`; counts are not invented as zero.
+Then submit a release:
 
+```bash
+curl -X POST http://localhost:8000/v1/releases -H "Content-Type: application/json" -d '{"release_id":"REL-001","repository":"releaseguard-ai","commit_sha":"abc123def456","ci_status":"success","test_status":"success","critical_vulnerabilities":0,"high_vulnerabilities":2}'
+```
+
+Tests:
+
+```bash
+pytest
+```
+
+## Evidence sources
+
+The compact payload above is the minimum. You can also hand it richer input:
+
+- `trivy_report`: paste raw `trivy --format json` output and the counts and CVE
+  list are parsed out of it.
+- Live GitHub data: set `GITHUB_TOKEN` and `GITHUB_REPOSITORY` (or use an
+  `owner/repo` value for `repository`) and the service pulls the commit, its
+  pull request, changed files, and the matching Actions run itself.
+
+If a fetch fails, that source is marked failed rather than guessed at.
+
+## Storage
+
+Everything is in memory by default, which is enough for local work and for the
+test suite. Set `DATABASE_URL` (copy `.env.example` to `.env`) and it switches
+to Postgres, creating its tables on startup. A local Postgres is available via:
+
+```bash
+docker compose up -d db
+```
+
+## Layout
+
+```
+app/
+  adapters/   pull evidence from GitHub, Actions, and Trivy
+  api/        HTTP routes
+  risk/       signal catalog, detectors, scoring engine
+  schemas/    pydantic models for evidence and assessments
+  normalize.py  compact payload -> full evidence
+  storage.py    memory and Postgres backends
+tests/
+```

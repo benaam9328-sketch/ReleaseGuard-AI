@@ -12,7 +12,7 @@ from app.schemas.evidence import (
 )
 
 
-def test_compact_example_expands_without_inventing_github_details() -> None:
+def test_compact_example_expands_without_inventing_github_details():
     submit = ReleaseEvidenceSubmit(
         release_id="REL-001",
         repository="releaseguard-ai",
@@ -41,7 +41,7 @@ def test_compact_example_expands_without_inventing_github_details() -> None:
     assert "trivy" not in evidence.missing_sources
 
 
-def test_omitted_trivy_counts_are_unavailable_not_zero() -> None:
+def test_omitted_trivy_counts_are_unavailable_not_zero():
     submit = ReleaseEvidenceSubmit(
         release_id="REL-002",
         repository="releaseguard-ai",
@@ -56,7 +56,7 @@ def test_omitted_trivy_counts_are_unavailable_not_zero() -> None:
     assert "trivy" in evidence.missing_sources
 
 
-def test_clean_trivy_scan_keeps_explicit_zeros() -> None:
+def test_clean_trivy_scan_keeps_explicit_zeros():
     submit = ReleaseEvidenceSubmit(
         release_id="REL-003",
         repository="releaseguard-ai",
@@ -72,7 +72,7 @@ def test_clean_trivy_scan_keeps_explicit_zeros() -> None:
     assert evidence.trivy.high == 0
 
 
-def test_github_success_requires_contract_fields() -> None:
+def test_github_success_requires_contract_fields():
     with pytest.raises(ValidationError):
         GithubEvidence(
             status=SourceStatus.success,
@@ -80,7 +80,7 @@ def test_github_success_requires_contract_fields() -> None:
         )
 
 
-def test_failed_trivy_scan_cannot_carry_zero_counts() -> None:
+def test_failed_trivy_scan_cannot_carry_zero_counts():
     with pytest.raises(ValidationError):
         TrivyEvidence(
             status=SourceStatus.unknown,
@@ -90,7 +90,7 @@ def test_failed_trivy_scan_cannot_carry_zero_counts() -> None:
         )
 
 
-def test_canonical_github_success_keeps_provided_timestamps() -> None:
+def test_canonical_github_success_keeps_provided_timestamps():
     first_commit_at = datetime(2026, 8, 16, 9, 0, tzinfo=timezone.utc)
     head_commit_at = datetime(2026, 8, 16, 16, 0, tzinfo=timezone.utc)
     submit = ReleaseEvidenceSubmit(
@@ -111,7 +111,6 @@ def test_canonical_github_success_keeps_provided_timestamps() -> None:
         critical_vulnerabilities=0,
         high_vulnerabilities=2,
     )
-    # Nested github plus compact CI/Trivy fields is a valid partial submit.
     evidence = expand_release_evidence(submit)
     assert evidence.github.status == SourceStatus.success
     assert evidence.github.first_commit_sha == "aaa111"

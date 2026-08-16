@@ -9,13 +9,13 @@ from app.schemas.enums import ScanStatus, SignalId, SourceName, SourceStatus
 from app.schemas.evidence import ReleaseEvidence
 
 
-def _signal(signal_id: SignalId, evidence: str, source: SourceName) -> RiskSignal:
+def _signal(signal_id: SignalId, reason: str, source: SourceName) -> RiskSignal:
     spec = CATALOG[signal_id]
     return RiskSignal(
         signal=spec.signal,
         severity=spec.severity,
         weight=spec.weight,
-        evidence=evidence,
+        evidence=reason,
         source=source,
         deduplication_group=spec.group,
     )
@@ -103,7 +103,7 @@ def _change_signals(evidence: ReleaseEvidence) -> list[RiskSignal]:
     migration = github.database_migration_detected is True
     if github.changed_files:
         migration = migration or any(
-            _is_migration_path(item.path) for item in github.changed_files
+            _is_migration_path(changed.path) for changed in github.changed_files
         )
     if migration:
         signals.append(
@@ -164,10 +164,10 @@ def _history_signals(evidence: ReleaseEvidence) -> list[RiskSignal]:
 
 
 def _missing_evidence_signals(evidence: ReleaseEvidence) -> list[RiskSignal]:
-    named = set(evidence.missing_sources) | set(evidence.failed_sources)
+    unusable = set(evidence.missing_sources) | set(evidence.failed_sources)
     if evidence.trivy.scan_status in {ScanStatus.scan_failed, ScanStatus.unavailable}:
-        named.add(SourceName.trivy.value)
-    missing_critical = [name for name in CRITICAL_SOURCE_NAMES if name in named]
+        unusable.add(SourceName.trivy.value)
+    missing_critical = [name for name in CRITICAL_SOURCE_NAMES if name in unusable]
     if not missing_critical:
         return []
     return [

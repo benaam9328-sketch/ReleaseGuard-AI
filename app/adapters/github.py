@@ -35,11 +35,11 @@ def github_evidence_from_commit(
     pr_commits: list | None = None,
 ) -> GithubEvidence:
     files = []
-    for item in commit_payload.get("files") or []:
-        path = item.get("filename")
+    for entry in commit_payload.get("files") or []:
+        path = entry.get("filename")
         if not path:
             continue
-        github_status = str(item.get("status") or "modified")
+        github_status = str(entry.get("status") or "modified")
         files.append(
             ChangedFile(
                 path=path,
@@ -89,5 +89,7 @@ def github_evidence_from_commit(
         changed_files_count=len(files),
         lines_changed=additions + deletions,
         changed_files=files or None,
-        database_migration_detected=any(is_migration_path(item.path) for item in files),
+        database_migration_detected=any(
+            is_migration_path(changed.path) for changed in files
+        ),
     )

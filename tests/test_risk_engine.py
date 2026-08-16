@@ -20,7 +20,7 @@ from app.schemas.evidence import (
 )
 
 
-def _expand(**kwargs) -> object:
+def _expand(**kwargs):
     payload = {
         "release_id": "REL-001",
         "repository": "releaseguard-ai",
@@ -30,7 +30,7 @@ def _expand(**kwargs) -> object:
     return expand_release_evidence(ReleaseEvidenceSubmit(**payload))
 
 
-def test_contract_high_risk_example_scores_75() -> None:
+def test_contract_high_risk_example_scores_75():
     first = datetime(2026, 8, 16, 9, 0, tzinfo=timezone.utc)
     head = datetime(2026, 8, 16, 16, 0, tzinfo=timezone.utc)
     evidence = _expand(
@@ -74,7 +74,7 @@ def test_contract_high_risk_example_scores_75() -> None:
     )
 
     result = assess(evidence)
-    ids = {item.signal for item in result.signals}
+    ids = {sig.signal for sig in result.signals}
     assert SignalId.critical_vulnerability in ids
     assert SignalId.database_migration in ids
     assert SignalId.similar_historical_failure in ids
@@ -86,7 +86,7 @@ def test_contract_high_risk_example_scores_75() -> None:
     assert result.approval.state.value == "pending"
 
 
-def test_ci_failure_and_rollback_dedupe_to_30() -> None:
+def test_ci_failure_and_rollback_dedupe_to_30():
     evidence = _expand(
         ci_status=SourceStatus.failure,
         test_status=SourceStatus.success,
@@ -98,15 +98,17 @@ def test_ci_failure_and_rollback_dedupe_to_30() -> None:
         ),
     )
     result = assess(evidence)
-    groups = [item.deduplication_group.value for item in result.signals]
+    groups = [sig.deduplication_group.value for sig in result.signals]
     assert groups.count("delivery_failure") == 1
     delivery = next(
-        item for item in result.signals if item.deduplication_group.value == "delivery_failure"
+        sig
+        for sig in result.signals
+        if sig.deduplication_group.value == "delivery_failure"
     )
     assert delivery.weight == 30
 
 
-def test_failed_trivy_scan_is_missing_evidence_not_clean() -> None:
+def test_failed_trivy_scan_is_missing_evidence_not_clean():
     evidence = _expand(
         ci_status=SourceStatus.success,
         test_status=SourceStatus.success,
@@ -116,13 +118,13 @@ def test_failed_trivy_scan_is_missing_evidence_not_clean() -> None:
         ),
     )
     result = assess(evidence)
-    ids = {item.signal for item in result.signals}
+    ids = {sig.signal for sig in result.signals}
     assert SignalId.critical_vulnerability not in ids
     assert SignalId.high_vulnerability not in ids
     assert SignalId.missing_critical_evidence in ids
 
 
-def test_unknown_ci_is_not_treated_as_failure() -> None:
+def test_unknown_ci_is_not_treated_as_failure():
     evidence = _expand(
         ci_status=SourceStatus.unknown,
         test_status=SourceStatus.unknown,
@@ -130,12 +132,12 @@ def test_unknown_ci_is_not_treated_as_failure() -> None:
         high_vulnerabilities=0,
     )
     result = assess(evidence)
-    ids = {item.signal for item in result.signals}
+    ids = {sig.signal for sig in result.signals}
     assert SignalId.ci_failure not in ids
     assert SignalId.missing_critical_evidence in ids
 
 
-def test_multiple_high_cves_fire_once() -> None:
+def test_multiple_high_cves_fire_once():
     first = datetime(2026, 8, 16, 9, 0, tzinfo=timezone.utc)
     head = datetime(2026, 8, 16, 16, 0, tzinfo=timezone.utc)
     evidence = _expand(
@@ -164,13 +166,13 @@ def test_multiple_high_cves_fire_once() -> None:
     )
     result = assess(evidence)
     high_signals = [
-        item for item in result.signals if item.signal == SignalId.high_vulnerability
+        sig for sig in result.signals if sig.signal == SignalId.high_vulnerability
     ]
     assert len(high_signals) == 1
     assert high_signals[0].weight == 15
 
 
-def test_score_is_capped_at_100() -> None:
+def test_score_is_capped_at_100():
     first = datetime(2026, 8, 16, 9, 0, tzinfo=timezone.utc)
     head = datetime(2026, 8, 16, 16, 0, tzinfo=timezone.utc)
     evidence = _expand(
@@ -207,7 +209,7 @@ def test_score_is_capped_at_100() -> None:
     assert result.risk_level == RiskLevel.HIGH
 
 
-def test_medium_band_requires_review() -> None:
+def test_medium_band_requires_review():
     first = datetime(2026, 8, 16, 9, 0, tzinfo=timezone.utc)
     head = datetime(2026, 8, 16, 16, 0, tzinfo=timezone.utc)
     evidence = _expand(
@@ -231,7 +233,7 @@ def test_medium_band_requires_review() -> None:
     assert result.recommendation == Recommendation.REQUIRE_HUMAN_REVIEW
 
 
-def test_low_band_allows() -> None:
+def test_low_band_allows():
     first = datetime(2026, 8, 16, 9, 0, tzinfo=timezone.utc)
     head = datetime(2026, 8, 16, 16, 0, tzinfo=timezone.utc)
     evidence = _expand(
