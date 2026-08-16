@@ -104,6 +104,12 @@ The compact payload above is the minimum. You can also hand it richer input:
 
 If a fetch fails, that source is marked failed rather than guessed at.
 
+Labeled synthetic history records in `app/history/synthetic_records.json` are
+matched against the current release (migration or matching vulnerability severity).
+They are never presented as real enterprise history (`history.is_synthetic`).
+No catalog match leaves `similar_historical_failure` false; an empty catalog stays
+`unknown`, not a clean history.
+
 DORA metrics come from stored `DeliveryEvent` records (`POST /v1/events`).
 Empty event history is `unavailable`, not zero. DORA is not the risk score.
 
@@ -125,6 +131,7 @@ docker compose up -d db
 
 ```
 app/
+  history/    labeled synthetic similar-failure matching
   dora/       deployment frequency, lead time, CFR, MTTR
   adapters/   pull evidence from GitHub, Actions, and Trivy
   ai/         Groq explanation of the deterministic assessment

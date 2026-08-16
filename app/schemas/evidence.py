@@ -120,9 +120,11 @@ class InfrastructureEvidence(BaseModel):
 
 class HistoryEvidence(BaseModel):
     status: SourceStatus = SourceStatus.unknown
+    source: SourceName = SourceName.history
     similar_historical_failure: bool | None = None
     rollback_required_recently: bool | None = None
     is_synthetic: bool = False
+    matched_record_ids: list[str] | None = None
 
 
 class ReleaseEvidence(BaseModel):

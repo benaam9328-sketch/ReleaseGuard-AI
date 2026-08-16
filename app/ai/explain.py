@@ -37,6 +37,7 @@ def _facts(assessment: Assessment, evidence: ReleaseEvidence) -> dict:
         "missing_sources": evidence.missing_sources,
         "failed_sources": evidence.failed_sources,
         "is_synthetic": evidence.is_synthetic,
+        "history": evidence.history.model_dump(mode="json"),
         "dora_context": assessment.dora_context.model_dump(mode="json"),
     }
 

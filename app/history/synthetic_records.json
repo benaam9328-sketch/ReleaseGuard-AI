@@ -1,0 +1,22 @@
+[
+  {
+    "record_id": "HIST-MIG-001",
+    "repository": "releaseguard-ai",
+    "outcome": "rollback",
+    "database_migration": true,
+    "critical_vulnerabilities": 0,
+    "high_vulnerabilities": 0,
+    "is_synthetic": true,
+    "summary": "Labeled synthetic demo: a similar migration was rolled back."
+  },
+  {
+    "record_id": "HIST-CVE-001",
+    "repository": "releaseguard-ai",
+    "outcome": "incident",
+    "database_migration": false,
+    "critical_vulnerabilities": 1,
+    "high_vulnerabilities": 0,
+    "is_synthetic": true,
+    "summary": "Labeled synthetic demo: a critical CVE coincided with a production incident."
+  }
+]

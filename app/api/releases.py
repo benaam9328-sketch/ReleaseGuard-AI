@@ -7,6 +7,7 @@ from app.adapters.enrich import enrich_release_evidence
 from app.ai.explain import explain_assessment
 from app.config import get_settings
 from app.dora.metrics import calculate_dora
+from app.history.matcher import apply_history
 from app.normalize import expand_release_evidence
 from app.risk.catalog import DORA_TREND_WINDOW_DAYS, DORA_WINDOW_DAYS
 from app.risk.engine import assess
@@ -56,6 +57,7 @@ def submit_release(
 ) -> ReleaseAnalyzeResponse:
     evidence = expand_release_evidence(payload)
     evidence = enrich_release_evidence(evidence, payload, get_settings())
+    evidence = apply_history(evidence, payload)
     stored, _created = store.save(evidence)
     assessment = _complete_assessment(stored, store)
     return ReleaseAnalyzeResponse(evidence=stored, assessment=assessment)
