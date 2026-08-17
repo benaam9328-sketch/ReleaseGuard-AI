@@ -69,24 +69,24 @@ export default function DashboardPage() {
     setBusy(true);
     setError("");
     try {
-      const created = await fetch(`${API}/v1/releases`, {
+      const created = await fetch(`${API}/v1/demo/seed`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           release_id: releaseId || "REL-001",
-          repository: "releaseguard-ai",
-          commit_sha: "abc123def456",
-          ci_status: "success",
-          test_status: "success",
-          critical_vulnerabilities: 0,
-          high_vulnerabilities: 2,
         }),
       });
       if (!created.ok) {
-        setError("Could not create demo release. Is the API running on port 8000?");
+        const hint =
+          created.status === 404
+            ? "Rebuild the API so /v1/demo/seed exists: docker compose up --build -d"
+            : "See the API logs for details.";
+        setError(`Demo seed failed (HTTP ${created.status}). ${hint}`);
         return;
       }
       await load(releaseId || "REL-001");
+    } catch {
+      setError("Could not reach the API on port 8000. Start it with docker compose up --build.");
     } finally {
       setBusy(false);
     }
@@ -226,7 +226,11 @@ export default function DashboardPage() {
               <p className="text-xs text-amber-700">Historical match is labeled synthetic.</p>
             ) : null}
             <p className="mt-3 text-sm whitespace-pre-wrap">
-              {assessment.ai_explanation?.text || `AI explanation: ${assessment.ai_explanation?.status || "unknown"}`}
+              {assessment.ai_explanation?.status === "success"
+                ? assessment.ai_explanation.text
+                : assessment.ai_explanation?.status === "failure"
+                  ? "Groq failed. Check GROQ_API_KEY in .env, then recreate the API container. The risk score is unchanged."
+                  : "Groq was not called (no API key). The risk score is unchanged."}
             </p>
           </section>
         </div>

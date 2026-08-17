@@ -6,7 +6,7 @@ from app.schemas.enums import SourceStatus
 from app.schemas.evidence import ReleaseEvidence
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-GROQ_MODEL = "llama-3.3-70b-versatile"
+GROQ_MODEL = "openai/gpt-oss-20b"
 
 _SYSTEM_PROMPT = """You explain a ReleaseGuard release-risk assessment to a human approver.
 Use only the facts in the user message.
@@ -65,7 +65,7 @@ def explain_assessment(
         return assessment
 
     payload = {
-        "model": GROQ_MODEL,
+        "model": settings.groq_model or GROQ_MODEL,
         "temperature": 0.2,
         "max_tokens": 400,
         "messages": [

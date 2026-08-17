@@ -53,6 +53,7 @@ not change its score, and nothing is blocked yet (`enforcement` is `none`).
 | `POST` | `/v1/releases/{release_id}/approval` | Record an approve or reject |
 | `GET` | `/v1/dora` | 30-day DORA metrics plus a 7-day trend |
 | `POST` | `/v1/events` | Store a delivery/incident event |
+| `POST` | `/v1/demo/seed` | Seed a labeled demo release plus DORA events |
 
 Interactive docs are at `/docs` once the server is running.
 
@@ -121,6 +122,23 @@ npm run dev
 
 Open http://localhost:3000/dashboard
 
+**Create demo release** posts to `/v1/demo/seed`. That stores labeled synthetic
+delivery events so DORA is not all `unavailable`. The banner on the dashboard
+marks those numbers as synthetic.
+
+If the API container was already running, rebuild it so this code is inside it:
+
+```bash
+docker compose up --build -d
+```
+
+If you changed `GROQ_API_KEY` in `.env`, recreate the API container so Compose
+picks the new value up:
+
+```bash
+docker compose up -d --force-recreate api
+```
+
 ## GitHub Actions
 
 ## Evidence sources
@@ -144,7 +162,7 @@ No catalog match leaves `similar_historical_failure` false; an empty catalog sta
 DORA metrics come from stored `DeliveryEvent` records (`POST /v1/events`).
 Empty event history is `unavailable`, not zero. DORA is not the risk score.
 
-Set `GROQ_API_KEY` in `.env` (not in git) to attach a Llama 3.3 70B explanation.
+Set `GROQ_API_KEY` in `.env` (not in git) to attach a Groq explanation (`openai/gpt-oss-20b`, Free plan).
 The model only comments on the deterministic score and signals; it cannot change them.
 Without a key, `ai_explanation.status` stays `unknown`.
 

@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     github_token: str | None = None
     github_repository: str | None = None
     groq_api_key: str | None = None
+    groq_model: str = "openai/gpt-oss-20b"
 
 
 def get_settings() -> Settings:

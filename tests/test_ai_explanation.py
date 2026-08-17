@@ -56,6 +56,23 @@ def test_groq_text_does_not_change_score() -> None:
     assert "High vulnerabilities" in explained.ai_explanation.text
 
 
+def test_groq_request_uses_current_model() -> None:
+    evidence, assessment = _assessment()
+    seen: dict = {}
+
+    def fake_post(_url: str, payload: dict):
+        seen["model"] = payload["model"]
+        return 200, {"choices": [{"message": {"content": "ok"}}]}
+
+    explain_assessment(
+        assessment,
+        evidence,
+        Settings(groq_api_key="test-key"),
+        http_post=fake_post,
+    )
+    assert seen["model"] == "openai/gpt-oss-20b"
+
+
 def test_failed_groq_call_is_failure_not_invented() -> None:
     evidence, assessment = _assessment()
     score = assessment.risk_score
