@@ -1,6 +1,8 @@
 .env
 .env.*
 !.env.example
+.cursor/
+*.md
 .venv/
 venv/
 __pycache__/
